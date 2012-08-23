@@ -1,0 +1,137 @@
+diff -Naru -x .git node-startup-controller-HEAD-958e5ab/configure.ac node-startup-controller/configure.ac
+--- node-startup-controller-HEAD-958e5ab/configure.ac	2012-08-10 14:01:57.000000000 +0300
++++ node-startup-controller/configure.ac	2012-08-23 14:28:00.000000000 +0300
+@@ -67,7 +67,11 @@
+ dnl *************************
+ dnl *** Check for GTK-Doc ***
+ dnl *************************
++m4_ifdef([GTK_DOC_CHECK], [
+ GTK_DOC_CHECK([1.14])
++],[
++AM_CONDITIONAL([ENABLE_GTK_DOC], false)
++])
+ 
+ dnl *******************************
+ dnl *** Check for gdbus-codegen ***
+@@ -86,7 +90,7 @@
+ PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.30.0])
+ PKG_CHECK_MODULES([GIO], [gio-2.0 >= 2.30.0])
+ PKG_CHECK_MODULES([GIO_UNIX], [gio-unix-2.0 >= 2.30.0])
+-PKG_CHECK_MODULES([SYSTEMD_DAEMON], [libsystemd-daemon >= 183])
++PKG_CHECK_MODULES([SYSTEMD_DAEMON], [libsystemd-daemon >= 43])
+ PKG_CHECK_MODULES([DLT], [automotive-dlt >= 2.2.0])
+ 
+ dnl *********************************************
+diff -Naru -x .git node-startup-controller-HEAD-958e5ab/docs/reference/node-startup-controller/Makefile.am node-startup-controller/docs/reference/node-startup-controller/Makefile.am
+--- node-startup-controller-HEAD-958e5ab/docs/reference/node-startup-controller/Makefile.am	2012-08-10 14:01:57.000000000 +0300
++++ node-startup-controller/docs/reference/node-startup-controller/Makefile.am	2012-08-23 14:28:00.000000000 +0300
+@@ -112,11 +112,11 @@
+ 	$(top_builddir)/common/libcommon.la
+ 
+ # This includes the standard gtk-doc make rules, copied by gtkdocize.
+-include $(top_srcdir)/gtk-doc.make
++-include $(top_srcdir)/gtk-doc.make
+ 
+ # Other files to distribute
+ # e.g. EXTRA_DIST += version.xml.in
+-EXTRA_DIST +=								\
++EXTRA_DIST =								\
+ 	node-startup-controller.types					\
+ 	version.xml.in
+ 
+diff -Naru -x .git node-startup-controller-HEAD-958e5ab/tests/legacy-app-handler/Makefile.am node-startup-controller/tests/legacy-app-handler/Makefile.am
+--- node-startup-controller-HEAD-958e5ab/tests/legacy-app-handler/Makefile.am	2012-08-10 14:01:57.000000000 +0300
++++ node-startup-controller/tests/legacy-app-handler/Makefile.am	2012-08-23 14:28:00.000000000 +0300
+@@ -1,14 +1,26 @@
+ # vi:set ts=8 sw=8 noet ai nocindent:
+ 
++service_filesdir =							\
++	$(datadir)/dbus-1/system-services
++
++service_files_DATA = 							\
++	$(service_in_files:.service.in=.service)
++
+ service_in_files =							\
+ 	legacy-app-handler-test1.service.in				\
+ 	legacy-app-handler-test2.service.in				\
+ 	legacy-app-handler-test3.service.in
+ 
+-noinst_DATA =								\
+-	legacy-app-handler-test						\
+-	legacy-app-handler-test.conf					\
+-	$(service_in_files:.service.in=.service)
++legacy_app_handlerdir =	$(bindir)
++
++legacy_app_handler_DATA =						\
++	legacy-app-handler-test
++
++legacy_app_handler_confdir =						\
++	$(sysconfdir)/dbus-1/system.d
++
++legacy_app_handler_conf_DATA =						\
++	legacy-app-handler-test.conf
+ 
+ %.service: %.service.in
+ 	sed -e "s,\@libdir\@,$(libdir),g"				\
+diff -Naru -x .git node-startup-controller-HEAD-958e5ab/tests/node-startup-controller/Makefile.am node-startup-controller/tests/node-startup-controller/Makefile.am
+--- node-startup-controller-HEAD-958e5ab/tests/node-startup-controller/Makefile.am	2012-08-10 14:01:57.000000000 +0300
++++ node-startup-controller/tests/node-startup-controller/Makefile.am	2012-08-23 14:28:00.000000000 +0300
+@@ -10,7 +10,7 @@
+ 	fi
+ 	@echo "============================="
+ 
+-noinst_SCRIPTS =							\
++bin_SCRIPTS =							\
+ 	test-luc-handler
+ 
+ EXTRA_DIST =								\
+@@ -21,7 +21,7 @@
+ export NODE_STARTUP_CONTROLLER_CMD =					\
+ 	$(libdir)/node-startup-controller-$(NODE_STARTUP_CONTROLLER_VERSION_API)/node-startup-controller
+ 
+-noinst_PROGRAMS =							\
++bin_PROGRAMS =							\
+ 	gvariant-writer
+ 
+ gvariant_writer_SOURCES =						\
+diff -Naru -x .git node-startup-controller-HEAD-958e5ab/tests/node-startup-controller/test-luc-handler node-startup-controller/tests/node-startup-controller/test-luc-handler
+--- node-startup-controller-HEAD-958e5ab/tests/node-startup-controller/test-luc-handler	2012-08-10 14:01:57.000000000 +0300
++++ node-startup-controller/tests/node-startup-controller/test-luc-handler	2012-08-23 14:30:26.000000000 +0300
+@@ -4,13 +4,15 @@
+ #set -e
+ #set -x
+ 
++LUC_PATH=/etc/node-startup-controller/last-user-context
++export LUC_PATH
+ 
+ # function to compare the LastUserContext
+ # $1 is the context
+ # $2 is the path to the file to compare the context to
+ compare_luc()
+ {
+-  ./gvariant-writer "$1" "$2"
++  gvariant-writer "$1" "$2"
+   diff -q "$LUC_PATH" "$2"
+ }
+ 
+@@ -60,20 +62,6 @@
+ rm -f temp
+ rm -f "$LUC_PATH"
+ 
+-
+-# kill any existing instances of the Node Startup Controller
+-skill -SIGKILL node-startup-controller 2>&1 >/dev/null
+-
+-# start the Node Startup Controller manually
+-$NODE_STARTUP_CONTROLLER_CMD &
+-
+-# wait for ten seconds, hoping the Node Startup Controller will become available
+-sleep 2
+-
+-# kill the Node Startup Controller when the test script exits
+-trap "skill -SIGKILL node-startup-controller 2>&1 >/dev/null" EXIT
+-
+-
+ # test a simple dictionary
+ begin
+ register "{0: ['app1.unit']}"
