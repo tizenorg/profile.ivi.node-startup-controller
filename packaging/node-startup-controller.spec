@@ -28,7 +28,7 @@ Dummy Node Startup Controller instance
 
 %build
 
-(test -d m4 || mkdir m4) && autoreconf -ivf
+(test -d m4 || mkdir m4) && gtkdocize && autoreconf -ivf
 
 ./configure --prefix=/usr \
 	    --sysconfdir=/etc \
