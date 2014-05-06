@@ -67,11 +67,7 @@ AC_CHECK_FUNCS([])
 dnl *************************
 dnl *** Check for GTK-Doc ***
 dnl *************************
-m4_ifdef([GTK_DOC_CHECK], [
 GTK_DOC_CHECK([1.14])
-],[
-AM_CONDITIONAL([ENABLE_GTK_DOC], false)
-])
 
 dnl *******************************
 dnl *** Check for gdbus-codegen ***

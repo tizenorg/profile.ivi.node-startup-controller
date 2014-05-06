@@ -112,11 +112,11 @@ GTKDOC_LIBS =								\
 	$(top_builddir)/common/libcommon.la
 
 # This includes the standard gtk-doc make rules, copied by gtkdocize.
-# include $(top_srcdir)/gtk-doc.make
+include $(top_srcdir)/gtk-doc.make
 
 # Other files to distribute
 # e.g. EXTRA_DIST += version.xml.in
-EXTRA_DIST =								\
+EXTRA_DIST +=								\
 	node-startup-controller.types					\
 	version.xml.in
 
