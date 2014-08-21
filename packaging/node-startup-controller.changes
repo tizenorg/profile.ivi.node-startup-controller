@@ -1,2 +1,5 @@
-* Fri Aug 24 01:30:21 UTC 2012 - Mikko Ylinen <mikko.ylinen@intel.con> - 1.0
+* Thu Aug 21 2014 Mikko Ylinen <mikko.ylinen@intel.com> accepted/tizen/ivi/panda/20140403.015920-3-gd1a21a6
+- Clean spec file for Yocto compatibility
+
+* Sat Aug 24 2012 Mikko Ylinen <mikko.ylinen@intel.com> 1.0
 - Initial release (node-startup-controller 1.0)
