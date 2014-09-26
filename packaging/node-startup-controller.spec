@@ -11,6 +11,8 @@ BuildRequires:  pkgconfig(libsystemd-daemon)
 BuildRequires:  pkgconfig(automotive-dlt)
 BuildRequires:  pkgconfig(zlib)
 BuildRequires:  python-xml
+BuildRequires:  pkgconfig
+BuildRequires:  fdupes
 
 %description
 The Node Startup Controller (NSC) is a system lifecycle package for GENIVI
@@ -44,6 +46,8 @@ Dummy Node Startup Controller instance
 
 %install
 %make_install
+
+%fdupes %{buildroot}
 
 %files
 %defattr(-,root,root,-)
